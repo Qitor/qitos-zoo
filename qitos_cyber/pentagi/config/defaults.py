@@ -30,6 +30,8 @@ class PentAGIConfig:
         Maximum Engine steps per subtask execution.
     max_total_steps : int
         Maximum total Engine steps for the entire run.
+    max_runtime_seconds : int
+        Wall-clock timeout for the entire run in seconds. 0 = no limit.
     language : str
         Response language (e.g. "en", "zh").
     search_backend : str
@@ -75,6 +77,7 @@ class PentAGIConfig:
     max_subtasks: int = 15
     max_steps_per_subtask: int = 15
     max_total_steps: int = 60
+    max_runtime_seconds: int = 0
     language: str = "en"
     search_backend: str = "duckduckgo"
     searxng_url: Optional[str] = None
@@ -92,6 +95,7 @@ class PentAGIConfig:
     mentor_enabled: bool = True
     mentor_interval: int = 5
     planner_enabled: bool = True
+    fast_mode: bool = False
     temperature: float = 0.7
     max_tokens: int = 4096
     context_window: Optional[int] = None

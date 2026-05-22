@@ -141,6 +141,7 @@ class PentAGIFlow:
             agent_registry=self._agent_registry,
             docker_image=self._get_docker_image(),
             language=self.config.language,
+            docker_env=self._docker_env,
         )
 
         # Build all agents
@@ -562,12 +563,16 @@ class PentAGIFlow:
         4. Optionally refine between subtasks (RefinerAgent)
         5. Produce final report (ReporterAgent)
         """
+        import time
+
         self._build_system()
         self._execution_monitor.start()
         self._current_task = task
         self._run_id = f"run-{uuid4().hex[:12]}"
         self._current_execution_context = ""
         self._current_execution_context_short = ""
+        self._run_start_time = time.monotonic()
+        self._total_step_count = 0
 
         # Step 1: Generate subtasks
         subtasks = self._generate_subtasks(task)
@@ -575,12 +580,25 @@ class PentAGIFlow:
 
         # Step 2: Execute subtask loop
         while not self._subtask_manager.is_complete:
+            # Check wall-clock timeout
+            if self._is_timed_out():
+                import sys
+                print(f"[PentAGI] Runtime timeout reached ({self.config.max_runtime_seconds}s)", file=sys.stderr)
+                break
+            # Check total step limit
+            if self.config.max_total_steps > 0 and self._total_step_count >= self.config.max_total_steps:
+                import sys
+                print(f"[PentAGI] Total step limit reached ({self.config.max_total_steps})", file=sys.stderr)
+                break
+
             current = self._subtask_manager.current_subtask
             if current is None:
                 break
 
             # Execute the current subtask
             result = self._execute_subtask(current)
+            steps = result.get("steps", 1)
+            self._total_step_count += steps
             self._execution_monitor.record_step(
                 success=result.get("status") != "error",
             )
@@ -612,8 +630,16 @@ class PentAGIFlow:
             report=report,
             subtasks=self._subtask_manager.subtasks,
             completed_subtasks=self._subtask_manager.completed_subtasks,
-            total_steps=self._execution_monitor._step_count,
+            total_steps=self._total_step_count,
+            status="completed" if not self._is_timed_out() else "timeout",
         )
+
+    def _is_timed_out(self) -> bool:
+        """Check if the run has exceeded its wall-clock timeout."""
+        if self.config.max_runtime_seconds <= 0:
+            return False
+        import time
+        return (time.monotonic() - self._run_start_time) > self.config.max_runtime_seconds
 
     def _generate_subtasks(self, task: str) -> List[Dict[str, Any]]:
         """Use GeneratorAgent to create a subtask plan."""
@@ -670,8 +696,8 @@ class PentAGIFlow:
             return {"status": "error", "message": "Primary agent not initialized"}
         primary._execution_context = self._current_execution_context
 
-        # Generate pre-execution plan if planner is enabled
-        if self.config.planner_enabled:
+        # Generate pre-execution plan if planner is enabled (disabled in fast mode)
+        if self.config.planner_enabled and not self.config.fast_mode:
             plan = self._plan_subtask(subtask)
             if plan:
                 primary._planner_plan = plan
@@ -694,11 +720,14 @@ class PentAGIFlow:
         # Build hooks list
         hooks = [
             AutoStoreHook(memory=self._memory, flow_id=self._run_id or ""),
-            ToolResultSummarizationHook(llm=self.llm),
         ]
 
-        # Add mentor hook if enabled
-        if self.config.mentor_enabled:
+        # Skip ToolResultSummarizationHook in fast mode (saves LLM calls)
+        if not self.config.fast_mode:
+            hooks.append(ToolResultSummarizationHook(llm=self.llm))
+
+        # Add mentor hook if enabled (disabled in fast mode)
+        if self.config.mentor_enabled and not self.config.fast_mode:
             hooks.append(MentorHook(
                 llm=self.llm,
                 execution_context=self._current_execution_context,
@@ -714,6 +743,7 @@ class PentAGIFlow:
             hooks=hooks,
             stop_criteria=[FinalResultCriteria()],
             loop_detector=ToolCallLoopDetector(strip_volatile=True),
+            env=self._docker_env,
         )
 
         try:
@@ -747,6 +777,7 @@ class PentAGIFlow:
             budget=RuntimeBudget(max_steps=3),
             critics=[ReflectorCritic()],
             recovery_policy=PentAGIRecoveryPolicy(),
+            env=self._docker_env,
         )
 
         try:

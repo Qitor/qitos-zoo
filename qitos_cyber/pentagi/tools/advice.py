@@ -58,12 +58,14 @@ class AdviceTool(BaseTool):
         agent_registry: Optional[AgentRegistry] = None,
         docker_image: str = "kalilinux/kali-rolling",
         language: str = "en",
+        docker_env: Any = None,
     ):
         self._llm = llm
         self._memory = memory
         self._agent_registry = agent_registry
         self._docker_image = docker_image
         self._language = language
+        self._docker_env = docker_env
         super().__init__(
             ToolSpec(
                 name="advice",
@@ -168,6 +170,7 @@ class AdviceTool(BaseTool):
                     barrier_tools=["enricher_result"],
                 )],
                 recovery_policy=PentAGIRecoveryPolicy(llm=self._llm),
+                env=self._docker_env,
             )
 
             result = engine.run(enricher_task)

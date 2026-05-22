@@ -8,7 +8,7 @@ LLM-based Reflector and ToolCallFixer, and vector DB memory.
 
 Usage::
 
-    from qitos.examples.pentagi import PentAGIRunner, PentAGIConfig
+    from qitos_zoo.qitos_cyber.pentagi import PentAGIRunner, PentAGIConfig
 
     config = PentAGIConfig(
         model_provider="openai-compatible",
