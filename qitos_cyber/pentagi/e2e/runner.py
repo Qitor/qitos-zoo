@@ -45,8 +45,8 @@ def run_pentagi_e2e_task(
     ScoreReport
         Structured score report with per-criterion results.
     """
-    from qitos.examples.pentagi.config.defaults import PentAGIConfig
-    from qitos.examples.pentagi.runner import PentAGIRunner
+    from qitos_zoo.qitos_cyber.pentagi.config.defaults import PentAGIConfig
+    from qitos_zoo.qitos_cyber.pentagi.runner import PentAGIRunner
 
     target = TARGETS[target_name]
     criteria = get_criteria(tier, target_name)

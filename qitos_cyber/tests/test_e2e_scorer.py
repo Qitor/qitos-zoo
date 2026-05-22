@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import pytest
 
-from qitos.examples.pentagi.e2e.criteria import (
+from qitos_zoo.qitos_cyber.pentagi.e2e.criteria import (
     TierCriterion,
     TIER1_CRITERIA,
     TIER2_DVWA_CRITERIA,
@@ -12,9 +12,9 @@ from qitos.examples.pentagi.e2e.criteria import (
     TIER4_DVWA_CRITERIA,
     get_criteria,
 )
-from qitos.examples.pentagi.e2e.report import CriterionScore, ScoreReport
-from qitos.examples.pentagi.e2e.scorer import PentagiE2EScorer, _collect_text
-from qitos.examples.pentagi.e2e.targets import TARGETS, VulnerableTarget
+from qitos_zoo.qitos_cyber.pentagi.e2e.report import CriterionScore, ScoreReport
+from qitos_zoo.qitos_cyber.pentagi.e2e.scorer import PentagiE2EScorer, _collect_text
+from qitos_zoo.qitos_cyber.pentagi.e2e.targets import TARGETS, VulnerableTarget
 
 
 # ---------------------------------------------------------------------------

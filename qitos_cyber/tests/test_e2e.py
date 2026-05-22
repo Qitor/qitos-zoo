@@ -79,8 +79,8 @@ skip_no_docker = pytest.mark.skipif(
 @pytest.fixture(scope="module")
 def target_dvwa():
     """Start and stop DVWA container for the test module."""
-    from qitos.examples.pentagi.e2e.targets import TARGETS
-    from qitos.examples.pentagi.e2e.target_manager import TargetManager
+    from qitos_zoo.qitos_cyber.pentagi.e2e.targets import TARGETS
+    from qitos_zoo.qitos_cyber.pentagi.e2e.target_manager import TargetManager
 
     manager = TargetManager(TARGETS["dvwa"], skip_nmap=True)
     try:
@@ -92,7 +92,7 @@ def target_dvwa():
 
 def _make_config(target_address: str, **overrides):
     """Build a PentAGIConfig for e2e testing."""
-    from qitos.examples.pentagi.config.defaults import PentAGIConfig
+    from qitos_zoo.qitos_cyber.pentagi.config.defaults import PentAGIConfig
 
     defaults = dict(
         model_provider=os.getenv("PENTAGI_MODEL_PROVIDER", "openai-compatible"),
@@ -123,9 +123,9 @@ class TestTier1Smoke:
 
     def test_pipeline_completes_dvwa(self, target_dvwa):
         """PentAGI completes a full run against DVWA without errors."""
-        from qitos.examples.pentagi.runner import PentAGIRunner
-        from qitos.examples.pentagi.e2e.scorer import PentagiE2EScorer
-        from qitos.examples.pentagi.e2e.criteria import TIER1_CRITERIA
+        from qitos_zoo.qitos_cyber.pentagi.runner import PentAGIRunner
+        from qitos_zoo.qitos_cyber.pentagi.e2e.scorer import PentagiE2EScorer
+        from qitos_zoo.qitos_cyber.pentagi.e2e.criteria import TIER1_CRITERIA
 
         config = _make_config(
             target_dvwa["address"],
@@ -159,9 +159,9 @@ class TestTier2Reconnaissance:
 
     def test_recon_dvwa(self, target_dvwa):
         """Agent discovers open ports and identifies services on DVWA."""
-        from qitos.examples.pentagi.runner import PentAGIRunner
-        from qitos.examples.pentagi.e2e.scorer import PentagiE2EScorer
-        from qitos.examples.pentagi.e2e.criteria import TIER2_DVWA_CRITERIA, TIER2_PASS_RATE
+        from qitos_zoo.qitos_cyber.pentagi.runner import PentAGIRunner
+        from qitos_zoo.qitos_cyber.pentagi.e2e.scorer import PentagiE2EScorer
+        from qitos_zoo.qitos_cyber.pentagi.e2e.criteria import TIER2_DVWA_CRITERIA, TIER2_PASS_RATE
 
         ground_truth = target_dvwa["manager"].get_ground_truth()
         config = _make_config(
@@ -201,9 +201,9 @@ class TestTier3VulnDiscovery:
 
     def test_vuln_discovery_dvwa(self, target_dvwa):
         """Agent identifies SQL injection and other web vulnerabilities on DVWA."""
-        from qitos.examples.pentagi.runner import PentAGIRunner
-        from qitos.examples.pentagi.e2e.scorer import PentagiE2EScorer
-        from qitos.examples.pentagi.e2e.criteria import TIER3_DVWA_CRITERIA, TIER3_PASS_RATE
+        from qitos_zoo.qitos_cyber.pentagi.runner import PentAGIRunner
+        from qitos_zoo.qitos_cyber.pentagi.e2e.scorer import PentagiE2EScorer
+        from qitos_zoo.qitos_cyber.pentagi.e2e.criteria import TIER3_DVWA_CRITERIA, TIER3_PASS_RATE
 
         config = _make_config(
             target_dvwa["address"],
@@ -245,9 +245,9 @@ class TestTier4Exploitation:
     def test_sqli_exploit_dvwa(self, target_dvwa):
         """Agent exploits SQL injection on DVWA and retrieves planted flag."""
         from uuid import uuid4
-        from qitos.examples.pentagi.runner import PentAGIRunner
-        from qitos.examples.pentagi.e2e.scorer import PentagiE2EScorer
-        from qitos.examples.pentagi.e2e.criteria import TIER4_DVWA_CRITERIA
+        from qitos_zoo.qitos_cyber.pentagi.runner import PentAGIRunner
+        from qitos_zoo.qitos_cyber.pentagi.e2e.scorer import PentagiE2EScorer
+        from qitos_zoo.qitos_cyber.pentagi.e2e.criteria import TIER4_DVWA_CRITERIA
 
         # Plant flag in the target
         flag = f"PENTAGI_FLAG_{uuid4().hex[:12]}"

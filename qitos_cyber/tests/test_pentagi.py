@@ -8,7 +8,7 @@ from unittest.mock import MagicMock, patch
 
 class TestPentAGIConfig:
     def test_default_config(self):
-        from qitos.examples.pentagi.config import PentAGIConfig
+        from qitos_zoo.qitos_cyber.pentagi.config import PentAGIConfig
         config = PentAGIConfig()
         assert config.model_provider == "openai-compatible"
         assert config.docker_profile == "kali"
@@ -16,7 +16,7 @@ class TestPentAGIConfig:
         assert config.language == "en"
 
     def test_custom_config(self):
-        from qitos.examples.pentagi.config import PentAGIConfig
+        from qitos_zoo.qitos_cyber.pentagi.config import PentAGIConfig
         config = PentAGIConfig(
             model_provider="openai",
             model_name="gpt-4o",
@@ -32,18 +32,18 @@ class TestPentAGIConfig:
 
 class TestDockerProfiles:
     def test_kali_profile(self):
-        from qitos.examples.pentagi.config import get_docker_config
+        from qitos_zoo.qitos_cyber.pentagi.config import get_docker_config
         config = get_docker_config("kali")
         assert config["image"] == "kalilinux/kali-rolling"
         assert "--cap-add=NET_ADMIN" in config["extra_run_args"]
 
     def test_ubuntu_profile(self):
-        from qitos.examples.pentagi.config import get_docker_config
+        from qitos_zoo.qitos_cyber.pentagi.config import get_docker_config
         config = get_docker_config("ubuntu")
         assert config["image"] == "ubuntu:22.04"
 
     def test_unknown_profile_raises(self):
-        from qitos.examples.pentagi.config import get_docker_config
+        from qitos_zoo.qitos_cyber.pentagi.config import get_docker_config
         with pytest.raises(ValueError, match="Unknown Docker profile"):
             get_docker_config("nonexistent")
 
@@ -52,14 +52,14 @@ class TestDockerProfiles:
 
 class TestBarrierTools:
     def test_barrier_done(self):
-        from qitos.examples.pentagi.tools.barrier import BarrierDone
+        from qitos_zoo.qitos_cyber.pentagi.tools.barrier import BarrierDone
         tool = BarrierDone()
         result = tool.execute({"summary": "Subtask completed successfully"})
         assert result["status"] == "done"
         assert "completed successfully" in result["summary"]
 
     def test_barrier_ask(self):
-        from qitos.examples.pentagi.tools.barrier import BarrierAsk
+        from qitos_zoo.qitos_cyber.pentagi.tools.barrier import BarrierAsk
         tool = BarrierAsk()
         result = tool.execute({"question": "What is the target IP?"})
         assert result["status"] == "waiting"
@@ -70,26 +70,26 @@ class TestBarrierTools:
 
 class TestTerminalTools:
     def test_terminal_no_env(self):
-        from qitos.examples.pentagi.tools.terminal_env import TerminalTool
+        from qitos_zoo.qitos_cyber.pentagi.tools.terminal_env import TerminalTool
         tool = TerminalTool()
         result = tool.execute({"command": "ls"}, runtime_context={})
         assert result["status"] == "error"
         assert "Docker" in result["message"]
 
     def test_read_file_no_env(self):
-        from qitos.examples.pentagi.tools.terminal_env import ReadFileTool
+        from qitos_zoo.qitos_cyber.pentagi.tools.terminal_env import ReadFileTool
         tool = ReadFileTool()
         result = tool.execute({"path": "/etc/passwd"}, runtime_context={})
         assert result["status"] == "error"
 
     def test_write_file_no_env(self):
-        from qitos.examples.pentagi.tools.terminal_env import WriteFileTool
+        from qitos_zoo.qitos_cyber.pentagi.tools.terminal_env import WriteFileTool
         tool = WriteFileTool()
         result = tool.execute({"path": "/tmp/test.txt", "content": "hello"}, runtime_context={})
         assert result["status"] == "error"
 
     def test_terminal_with_mock_env(self):
-        from qitos.examples.pentagi.tools.terminal_env import TerminalTool
+        from qitos_zoo.qitos_cyber.pentagi.tools.terminal_env import TerminalTool
         tool = TerminalTool()
         mock_env = MagicMock()
         mock_env.cmd.run.return_value = {"exit_code": 0, "stdout": "file.txt", "stderr": ""}
@@ -105,13 +105,13 @@ class TestTerminalTools:
 
 class TestSearchTools:
     def test_search_in_memory_no_memory(self):
-        from qitos.examples.pentagi.tools.search_network import SearchInMemoryTool
+        from qitos_zoo.qitos_cyber.pentagi.tools.search_network import SearchInMemoryTool
         tool = SearchInMemoryTool()
         result = tool.execute({"query": "test"}, runtime_context={})
         assert result["status"] == "error"
 
     def test_search_in_memory_with_mock_memory(self):
-        from qitos.examples.pentagi.tools.search_network import SearchInMemoryTool
+        from qitos_zoo.qitos_cyber.pentagi.tools.search_network import SearchInMemoryTool
         from qitos.core.memory import MemoryRecord
         mock_memory = MagicMock()
         mock_memory.retrieve.return_value = [
@@ -127,7 +127,7 @@ class TestSearchTools:
 
 class TestVectorDBTools:
     def test_search_guide_no_memory(self):
-        from qitos.examples.pentagi.tools.search_vector_db import SearchGuideTool
+        from qitos_zoo.qitos_cyber.pentagi.tools.search_vector_db import SearchGuideTool
         tool = SearchGuideTool()
         result = tool.execute({"query": "pentest"}, runtime_context={})
         assert result["status"] == "error"
@@ -137,13 +137,13 @@ class TestVectorDBTools:
 
 class TestStoreTools:
     def test_store_guide_no_memory(self):
-        from qitos.examples.pentagi.tools.store_agent_result import StoreGuideTool
+        from qitos_zoo.qitos_cyber.pentagi.tools.store_agent_result import StoreGuideTool
         tool = StoreGuideTool()
         result = tool.execute({"content": "test guide"}, runtime_context={})
         assert result["status"] == "error"
 
     def test_store_guide_with_mock_memory(self):
-        from qitos.examples.pentagi.tools.store_agent_result import StoreGuideTool
+        from qitos_zoo.qitos_cyber.pentagi.tools.store_agent_result import StoreGuideTool
         mock_memory = MagicMock()
         tool = StoreGuideTool(memory=mock_memory)
         result = tool.execute({"content": "Use nmap for port scanning", "title": "Port Scan Guide"})
@@ -155,7 +155,7 @@ class TestStoreTools:
 
 class TestReflectorCritic:
     def test_allows_tool_calls(self):
-        from qitos.examples.pentagi.critic.reflector import ReflectorCritic
+        from qitos_zoo.qitos_cyber.pentagi.critic.reflector import ReflectorCritic
         from qitos.engine.critic_result import CriticResult
         critic = ReflectorCritic()
         decision = MagicMock()
@@ -165,7 +165,7 @@ class TestReflectorCritic:
         assert result.action == "continue"
 
     def test_rejects_free_text(self):
-        from qitos.examples.pentagi.critic.reflector import ReflectorCritic
+        from qitos_zoo.qitos_cyber.pentagi.critic.reflector import ReflectorCritic
         from qitos.engine.critic_result import CriticResult
         critic = ReflectorCritic()
         decision = MagicMock()
@@ -176,7 +176,7 @@ class TestReflectorCritic:
         assert result.instruction_patch is not None
 
     def test_stops_after_max_retries(self):
-        from qitos.examples.pentagi.critic.reflector import ReflectorCritic
+        from qitos_zoo.qitos_cyber.pentagi.critic.reflector import ReflectorCritic
         critic = ReflectorCritic(max_retries=2)
         decision = MagicMock()
         decision.actions = []
@@ -191,7 +191,7 @@ class TestReflectorCritic:
 
 class TestStuckDetectionCritic:
     def test_detects_loop(self):
-        from qitos.examples.pentagi.critic.stuck_detector import StuckDetectionCritic
+        from qitos_zoo.qitos_cyber.pentagi.critic.stuck_detector import StuckDetectionCritic
         critic = StuckDetectionCritic(max_identical_actions=3)
         state = MagicMock()
         state.current_step = 5
@@ -204,7 +204,7 @@ class TestStuckDetectionCritic:
         assert result.action == "retry"
 
     def test_allows_varied_actions(self):
-        from qitos.examples.pentagi.critic.stuck_detector import StuckDetectionCritic
+        from qitos_zoo.qitos_cyber.pentagi.critic.stuck_detector import StuckDetectionCritic
         critic = StuckDetectionCritic()
         state = MagicMock()
         state.current_step = 2
@@ -219,22 +219,22 @@ class TestStuckDetectionCritic:
 
 class TestToolCallFixer:
     def test_fix_trailing_commas(self):
-        from qitos.examples.pentagi.critic.tool_call_fixer import ToolCallFixerRecovery
+        from qitos_zoo.qitos_cyber.pentagi.critic.tool_call_fixer import ToolCallFixerRecovery
         fixed = ToolCallFixerRecovery.try_fix_json('{"key": "value",}')
         assert fixed == {"key": "value"}
 
     def test_fix_missing_brackets(self):
-        from qitos.examples.pentagi.critic.tool_call_fixer import ToolCallFixerRecovery
+        from qitos_zoo.qitos_cyber.pentagi.critic.tool_call_fixer import ToolCallFixerRecovery
         fixed = ToolCallFixerRecovery.try_fix_json('{"key": "value"')
         assert fixed == {"key": "value"}
 
     def test_valid_json_passes(self):
-        from qitos.examples.pentagi.critic.tool_call_fixer import ToolCallFixerRecovery
+        from qitos_zoo.qitos_cyber.pentagi.critic.tool_call_fixer import ToolCallFixerRecovery
         fixed = ToolCallFixerRecovery.try_fix_json('{"key": "value"}')
         assert fixed == {"key": "value"}
 
     def test_unfixable_returns_none(self):
-        from qitos.examples.pentagi.critic.tool_call_fixer import ToolCallFixerRecovery
+        from qitos_zoo.qitos_cyber.pentagi.critic.tool_call_fixer import ToolCallFixerRecovery
         fixed = ToolCallFixerRecovery.try_fix_json('not json at all {{{')
         assert fixed is None
 
@@ -243,7 +243,7 @@ class TestToolCallFixer:
 
 class TestSubtaskManager:
     def test_set_plan(self):
-        from qitos.examples.pentagi.orchestrator.subtask_manager import SubtaskManager
+        from qitos_zoo.qitos_cyber.pentagi.orchestrator.subtask_manager import SubtaskManager
         mgr = SubtaskManager()
         mgr.set_plan([
             {"title": "Recon", "description": "Reconnaissance"},
@@ -254,7 +254,7 @@ class TestSubtaskManager:
         assert mgr.current_subtask["title"] == "Recon"
 
     def test_advance(self):
-        from qitos.examples.pentagi.orchestrator.subtask_manager import SubtaskManager
+        from qitos_zoo.qitos_cyber.pentagi.orchestrator.subtask_manager import SubtaskManager
         mgr = SubtaskManager()
         mgr.set_plan([
             {"title": "Step 1"},
@@ -266,14 +266,14 @@ class TestSubtaskManager:
         assert mgr.current_subtask["title"] == "Step 2"
 
     def test_apply_delta_add(self):
-        from qitos.examples.pentagi.orchestrator.subtask_manager import SubtaskManager
+        from qitos_zoo.qitos_cyber.pentagi.orchestrator.subtask_manager import SubtaskManager
         mgr = SubtaskManager()
         mgr.set_plan([{"id": "1", "title": "Step 1"}])
         mgr.apply_delta([{"op": "add", "title": "Step 2", "description": "New step"}])
         assert len(mgr.subtasks) == 2
 
     def test_apply_delta_remove(self):
-        from qitos.examples.pentagi.orchestrator.subtask_manager import SubtaskManager
+        from qitos_zoo.qitos_cyber.pentagi.orchestrator.subtask_manager import SubtaskManager
         mgr = SubtaskManager()
         mgr.set_plan([
             {"id": "1", "title": "Step 1"},
@@ -283,7 +283,7 @@ class TestSubtaskManager:
         assert len(mgr.subtasks) == 1
 
     def test_is_complete(self):
-        from qitos.examples.pentagi.orchestrator.subtask_manager import SubtaskManager
+        from qitos_zoo.qitos_cyber.pentagi.orchestrator.subtask_manager import SubtaskManager
         mgr = SubtaskManager()
         mgr.set_plan([{"title": "Only step"}])
         assert not mgr.is_complete
@@ -292,7 +292,7 @@ class TestSubtaskManager:
         assert mgr.is_complete
 
     def test_max_subtasks_enforcement(self):
-        from qitos.examples.pentagi.orchestrator.subtask_manager import SubtaskManager
+        from qitos_zoo.qitos_cyber.pentagi.orchestrator.subtask_manager import SubtaskManager
         mgr = SubtaskManager(max_subtasks=3)
         mgr.set_plan([{"title": f"Step {i}"} for i in range(5)])
         assert len(mgr.subtasks) == 3
@@ -302,7 +302,7 @@ class TestSubtaskManager:
 
 class TestExecutionMonitor:
     def test_progress_tracking(self):
-        from qitos.examples.pentagi.orchestrator.execution_monitor import ExecutionMonitor
+        from qitos_zoo.qitos_cyber.pentagi.orchestrator.execution_monitor import ExecutionMonitor
         monitor = ExecutionMonitor()
         monitor.start()
         monitor.record_step(success=True, new_findings=1)
@@ -312,7 +312,7 @@ class TestExecutionMonitor:
         assert summary["findings_count"] == 1
 
     def test_stuck_detection(self):
-        from qitos.examples.pentagi.orchestrator.execution_monitor import ExecutionMonitor
+        from qitos_zoo.qitos_cyber.pentagi.orchestrator.execution_monitor import ExecutionMonitor
         monitor = ExecutionMonitor(max_consecutive_failures=3)
         monitor.start()
         for _ in range(3):
@@ -327,7 +327,7 @@ class TestAgents:
         return MagicMock()
 
     def test_primary_agent_init_state(self):
-        from qitos.examples.pentagi.agents.primary import PrimaryPentestAgent, PentestState
+        from qitos_zoo.qitos_cyber.pentagi.agents.primary import PrimaryPentestAgent, PentestState
         agent = PrimaryPentestAgent(llm=self._make_mock_llm())
         state = agent.init_state("Test target", max_steps=60)
         assert isinstance(state, PentestState)
@@ -335,7 +335,7 @@ class TestAgents:
         assert state.task == "Test target"
 
     def test_primary_agent_system_prompt(self):
-        from qitos.examples.pentagi.agents.primary import PrimaryPentestAgent
+        from qitos_zoo.qitos_cyber.pentagi.agents.primary import PrimaryPentestAgent
         agent = PrimaryPentestAgent(llm=self._make_mock_llm(), language="en")
         state = agent.init_state("Test target")
         prompt = agent.build_system_prompt(state)
@@ -343,26 +343,26 @@ class TestAgents:
         assert "orchestration" in prompt.lower() or "ORCHESTRATION" in prompt
 
     def test_pentester_agent_init_state(self):
-        from qitos.examples.pentagi.agents.pentester import PentesterAgent
+        from qitos_zoo.qitos_cyber.pentagi.agents.pentester import PentesterAgent
         agent = PentesterAgent(llm=self._make_mock_llm())
         state = agent.init_state("Scan target")
         assert state.task == "Scan target"
         assert state.max_steps == 15
 
     def test_coder_agent_init_state(self):
-        from qitos.examples.pentagi.agents.coder import CoderAgent
+        from qitos_zoo.qitos_cyber.pentagi.agents.coder import CoderAgent
         agent = CoderAgent(llm=self._make_mock_llm())
         state = agent.init_state("Write exploit")
         assert state.task == "Write exploit"
 
     def test_generator_agent_single_shot(self):
-        from qitos.examples.pentagi.agents.generator import GeneratorAgent
+        from qitos_zoo.qitos_cyber.pentagi.agents.generator import GeneratorAgent
         agent = GeneratorAgent(llm=self._make_mock_llm())
         state = agent.init_state("Pen test target X")
         assert state.max_steps == 5  # Multi-step for generation
 
     def test_refiner_agent_init(self):
-        from qitos.examples.pentagi.agents.refiner import RefinerAgent
+        from qitos_zoo.qitos_cyber.pentagi.agents.refiner import RefinerAgent
         agent = RefinerAgent(llm=self._make_mock_llm())
         state = agent.init_state(
             "Refine plan",
@@ -372,7 +372,7 @@ class TestAgents:
         assert len(state.completed_subtasks) == 1
 
     def test_reporter_agent_should_stop(self):
-        from qitos.examples.pentagi.agents.reporter import ReporterAgent
+        from qitos_zoo.qitos_cyber.pentagi.agents.reporter import ReporterAgent
         agent = ReporterAgent(llm=self._make_mock_llm())
         state = agent.init_state("Generate report")
         assert not agent.should_stop(state)
@@ -380,13 +380,13 @@ class TestAgents:
         assert agent.should_stop(state)
 
     def test_adviser_agent_single_shot(self):
-        from qitos.examples.pentagi.agents.adviser import AdviserAgent
+        from qitos_zoo.qitos_cyber.pentagi.agents.adviser import AdviserAgent
         agent = AdviserAgent(llm=self._make_mock_llm())
         state = agent.init_state("Need advice")
         assert state.max_steps == 5
 
     def test_enricher_agent_should_stop(self):
-        from qitos.examples.pentagi.agents.enricher import EnricherAgent
+        from qitos_zoo.qitos_cyber.pentagi.agents.enricher import EnricherAgent
         agent = EnricherAgent(llm=self._make_mock_llm())
         state = agent.init_state("Enrich context")
         assert not agent.should_stop(state)
@@ -394,7 +394,7 @@ class TestAgents:
         assert agent.should_stop(state)
 
     def test_all_agents_importable(self):
-        from qitos.examples.pentagi.agents import (
+        from qitos_zoo.qitos_cyber.pentagi.agents import (
             PrimaryPentestAgent,
             PentesterAgent,
             CoderAgent,
@@ -428,7 +428,7 @@ class TestAgents:
 
 class TestPentAGIMemory:
     def test_append_and_retrieve(self):
-        from qitos.examples.pentagi.memory.pentagi_memory import PentAGIMemory
+        from qitos_zoo.qitos_cyber.pentagi.memory.pentagi_memory import PentAGIMemory
         from qitos.core.memory import MemoryRecord
         memory = PentAGIMemory()
         memory.append(MemoryRecord(
@@ -441,7 +441,7 @@ class TestPentAGIMemory:
         assert len(results) >= 0  # May or may not match with hash embedder
 
     def test_reset(self):
-        from qitos.examples.pentagi.memory.pentagi_memory import PentAGIMemory
+        from qitos_zoo.qitos_cyber.pentagi.memory.pentagi_memory import PentAGIMemory
         from qitos.core.memory import MemoryRecord
         memory = PentAGIMemory()
         memory.append(MemoryRecord(role="system", content="test", step_id=1, metadata={}))
@@ -573,7 +573,7 @@ class TestSearchBackends:
 
 class TestPentAGIRunner:
     def test_runner_creation(self):
-        from qitos.examples.pentagi import PentAGIRunner, PentAGIConfig
+        from qitos_zoo.qitos_cyber.pentagi import PentAGIRunner, PentAGIConfig
         config = PentAGIConfig(model_name="test-model")
         runner = PentAGIRunner(config)
         assert runner.config.model_name == "test-model"

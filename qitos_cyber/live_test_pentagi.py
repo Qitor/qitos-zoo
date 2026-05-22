@@ -12,7 +12,7 @@ import time
 # Add project root to path
 sys.path.insert(0, "/Users/morinop/qitos")
 
-from qitos.examples.pentagi import (
+from qitos_zoo.qitos_cyber.pentagi import (
     PentAGIRunner,
     PentAGIConfig,
 )

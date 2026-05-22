@@ -12,19 +12,22 @@ from __future__ import annotations
 import os
 import sys
 import time
+from pathlib import Path
 import traceback
 from dataclasses import dataclass, field
 from typing import Any, Callable, List, Optional
 
 # Add project root to path
-sys.path.insert(0, "/Users/morinop/qitos")
+_project_root = str(Path(__file__).resolve().parents[3])
+if _project_root not in sys.path:
+    sys.path.insert(0, _project_root)
 
 # LLM config (from existing live_test files)
 API_KEY = "MajUa5noC1OtfZ3RxznY23AZYWYisTPGc4MKZJyXB9Q="
 BASE_URL = "https://o8kjqm58o8ogcm5ek8aggddkb5ggk8dp.openapi-sj.sii.edu.cn/v1"
 MODEL_NAME = "ds-v4-pro"
 
-SANDBOX_DIR = "/Users/morinop/qitos/sandbox"
+SANDBOX_DIR = os.environ.get("QITOS_SANDBOX_DIR", os.path.join(os.path.dirname(__file__), "..", "..", "..", "sandbox"))
 
 
 @dataclass
