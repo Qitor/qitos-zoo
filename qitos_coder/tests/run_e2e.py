@@ -1,8 +1,8 @@
 """E2E test runner — runs coding agent tests in the sandbox and reports results.
 
 Usage:
-    cd /Users/morinop/qitos
-    python sandbox/run_e2e.py [test_name]
+    # Ensure qitos and qitos-zoo are installed or on PYTHONPATH
+    python qitos_zoo/qitos_coder/tests/run_e2e.py [test_name]
 
 If no test_name given, runs all tests sequentially.
 """

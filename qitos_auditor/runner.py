@@ -36,9 +36,9 @@ class DeepAuditRunner:
         provider = self.config.model_provider
         if provider == "openai-compatible":
             try:
-                from qitos.core.model_runtime import ModelRuntime
-                self.llm = ModelRuntime(
-                    provider=provider,
+                from qitos.models import ModelFactory
+                self.llm = ModelFactory.create(
+                    "openai-compatible",
                     model=self.config.model_name,
                     api_key=self.config.api_key,
                     base_url=self.config.base_url,

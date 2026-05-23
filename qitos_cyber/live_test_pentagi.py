@@ -9,8 +9,7 @@ import json
 import sys
 import time
 
-# Add project root to path
-sys.path.insert(0, "/Users/morinop/qitos")
+# Assumes qitos and qitos_zoo are installed or on PYTHONPATH
 
 from qitos_zoo.qitos_cyber.pentagi import (
     PentAGIRunner,
