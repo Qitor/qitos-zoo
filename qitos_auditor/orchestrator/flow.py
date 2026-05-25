@@ -79,13 +79,25 @@ class AuditFlow:
     4. _run_verification(task, analysis_handoff) → HandoffPayload
     5. _generate_report(all_handoffs) → report string
     6. Return AuditResult
+
+    Phase 1 integrations:
+    - Checkpoint: save state at each phase boundary
+    - Tracing: structured span-based tracing per phase
     """
 
-    def __init__(self, config: DeepAuditConfig, llm: Any = None):
+    def __init__(
+        self,
+        config: DeepAuditConfig,
+        llm: Any = None,
+        checkpoint_path: str | None = None,
+        tracing_mode: str = "disabled",
+    ):
         self.config = config
         self.llm = llm
         self.phase_manager = PhaseManager()
         self._all_findings: List[Dict[str, Any]] = []
+        self.checkpoint_path = checkpoint_path
+        self.tracing_mode = tracing_mode
 
     def run(self, task: str, target_path: Optional[str] = None) -> AuditResult:
         """Execute the full audit pipeline."""
@@ -314,11 +326,34 @@ class AuditFlow:
 
         budget = RuntimeBudget(max_steps=max_steps)
 
+        # Checkpoint store (Phase 1 integration)
+        checkpoint_store = None
+        if self.checkpoint_path:
+            from qitos.checkpoint.sqlite_store import SqliteCheckpointStore
+            checkpoint_store = SqliteCheckpointStore(self.checkpoint_path)
+
+        # Tracing provider (Phase 1 integration)
+        tracing_provider = None
+        if self.tracing_mode != "disabled":
+            from qitos.tracing import TracingProvider, TracingMode
+            from qitos.tracing.json_processor import JsonFileTraceProcessor
+            import os
+            mode = TracingMode.ENABLED_WITHOUT_DATA if self.tracing_mode == "without_data" else TracingMode.ENABLED
+            trace_dir = os.path.join(
+                self.config.target_path, ".qitos", "traces", "audit"
+            )
+            tracing_provider = TracingProvider(
+                processors=[JsonFileTraceProcessor(output_dir=trace_dir)],
+                mode=mode,
+            )
+
         return Engine(
             agent=agent,
             critics=critics,
             budget=budget,
             protocol=protocol,
+            checkpoint_store=checkpoint_store,
+            tracing_provider=tracing_provider,
         )
 
     def _resolve_protocol_from_harness(self) -> Any:

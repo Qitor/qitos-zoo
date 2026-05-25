@@ -20,6 +20,8 @@ class PentAGIMemory(Memory):
     1. pgvector — if pgvector_connection is provided
     2. InMemoryVectorStore — default, fine for testing
 
+    Y-9: Optional checkpoint_store for persistent state snapshots.
+
     Graphiti can be enabled separately for knowledge graph operations.
     """
 
@@ -29,6 +31,8 @@ class PentAGIMemory(Memory):
         vector_store: Optional[VectorStore] = None,
         graphiti_client: Optional[Any] = None,
         pgvector_connection: Optional[str] = None,
+        checkpoint_store: Optional[Any] = None,
+        checkpoint_path: Optional[str] = None,
     ):
         if vector_store is None and pgvector_connection:
             vector_store = self._create_pgvector_store(pgvector_connection)
@@ -37,6 +41,17 @@ class PentAGIMemory(Memory):
             store=vector_store,
         )
         self._graphiti = graphiti_client
+
+        # Y-9: Persistent store via CheckpointStore
+        self._checkpoint_store = checkpoint_store
+        if checkpoint_store is None and checkpoint_path:
+            from qitos.checkpoint.sqlite_store import SqliteCheckpointStore
+            self._checkpoint_store = SqliteCheckpointStore(checkpoint_path)
+
+    @property
+    def checkpoint_store(self) -> Optional[Any]:
+        """Access the CheckpointStore if configured."""
+        return self._checkpoint_store
 
     @staticmethod
     def _create_pgvector_store(connection_string: str) -> VectorStore:

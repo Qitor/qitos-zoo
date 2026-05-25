@@ -4,9 +4,10 @@ from __future__ import annotations
 
 import datetime
 from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional
+from typing import Annotated, Any, Dict, List, Optional
 
 from qitos.core.agent_module import AgentModule
+from qitos.core.channel import Append
 from qitos.core.decision import Decision
 from qitos.core.state import StateSchema
 
@@ -24,8 +25,8 @@ class PentestState(StateSchema):
     current_subtask_result: str = ""
     adviser_guidance: str = ""
     scratchpad: List[str] = field(default_factory=list)
-    findings: List[Dict[str, Any]] = field(default_factory=list)
-    completed_subtasks: List[Dict[str, Any]] = field(default_factory=list)
+    findings: Annotated[List[Dict[str, Any]], Append] = field(default_factory=list)
+    completed_subtasks: Annotated[List[Dict[str, Any]], Append] = field(default_factory=list)
     report: str = ""
     authorized_targets: List[str] = field(default_factory=list)
     docker_image: str = ""
@@ -40,6 +41,7 @@ class PrimaryPentestAgent(AgentModule[PentestState, Any, Any]):
     """
 
     name = "primary_pentest"
+    handoff_targets = ["pentester", "coder", "installer", "searcher", "memorist", "adviser", "enricher"]
 
     def __init__(
         self,

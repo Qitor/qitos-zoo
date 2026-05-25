@@ -1,0 +1,25 @@
+agent:
+  name: qitos_coder
+  compat_module: snowl_compat
+
+benchmarks:
+  - name: swebench
+    config:
+      split: lite
+      max_tasks: 50
+  - name: bfcl
+    config:
+      category: coding
+
+scorers:
+  - task_completion
+  - tool_trace_policy
+  - workspace_diff
+
+env:
+  type: docker
+  image: python:3.11
+
+model:
+  - claude-sonnet-4-6
+  - deepseek-v3

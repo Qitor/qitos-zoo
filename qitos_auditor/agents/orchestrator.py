@@ -3,9 +3,10 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional
+from typing import Annotated, Any, Dict, List, Optional
 
 from qitos.core.agent_module import AgentModule
+from qitos.core.channel import Append
 from qitos.core.decision import Decision
 from qitos.core.state import StateSchema
 
@@ -136,8 +137,8 @@ class OrchestratorState(StateSchema):
     target_path: str = ""
     tech_stack: Dict[str, str] = field(default_factory=dict)
     entry_points: List[str] = field(default_factory=list)
-    findings: List[Dict[str, Any]] = field(default_factory=list)
-    handoffs: Dict[str, Any] = field(default_factory=dict)
+    findings: Annotated[List[Dict[str, Any]], Append] = field(default_factory=list)
+    handoffs: Annotated[Dict[str, Any], Append] = field(default_factory=dict)
     report: str = ""
     phase_dispatched: Dict[str, int] = field(default_factory=dict)
 
@@ -150,6 +151,7 @@ class OrchestratorAgent(AgentModule[OrchestratorState, Any, Any]):
     """
 
     name = "orchestrator"
+    handoff_targets = ["recon", "analysis", "verification"]
 
     def __init__(
         self,

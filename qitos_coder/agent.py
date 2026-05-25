@@ -49,6 +49,12 @@ class ClaudeCodeAgent(AgentModule[ClaudeCodeState, Any, Any]):
     - Project instructions from .qitos/instructions.md
     - Streaming token output
     - 30+ tools at Claude Code parity
+
+    Phase 1 integrations:
+    - MCP server support (mcp_servers parameter)
+    - Checkpoint via SqliteCheckpointStore
+    - Structured tracing via TracingProvider
+    - Interrupt-based approval for dangerous tools
     """
 
     def __init__(
@@ -61,6 +67,9 @@ class ClaudeCodeAgent(AgentModule[ClaudeCodeState, Any, Any]):
         model_protocol: Any = None,
         permission_mode: str = "default",
         include_mcp: bool = False,
+        mcp_servers: List[Any] | None = None,
+        checkpoint_path: str | None = None,
+        tracing_mode: str = "disabled",
     ):
         toolset = CodingToolSet(
             workspace_root=workspace_root,
@@ -72,11 +81,14 @@ class ClaudeCodeAgent(AgentModule[ClaudeCodeState, Any, Any]):
             max_steps=max_steps,
             model_parser=model_parser,
             model_protocol=model_protocol,
+            mcp_servers=mcp_servers,
         )
         self.max_steps = max_steps
         self.workspace_root = os.path.abspath(workspace_root)
         self.permission_mode = permission_mode
         self.include_mcp = include_mcp
+        self.checkpoint_path = checkpoint_path
+        self.tracing_mode = tracing_mode
 
         # Create permission pipeline and RBW enforcer
         mode_map = {
@@ -148,3 +160,51 @@ class ClaudeCodeAgent(AgentModule[ClaudeCodeState, Any, Any]):
     def should_stop(self, state: ClaudeCodeState) -> bool:
         """Check if the agent should stop."""
         return False  # Engine handles max_steps and stop criteria
+
+    def create_engine(self, **kwargs: Any) -> Any:
+        """Create an Engine with this agent's Phase 1 integrations.
+
+        Sets up:
+        - SqliteCheckpointStore if checkpoint_path is configured
+        - TracingProvider if tracing_mode != "disabled"
+        - PermissionPipeline for tool approval
+        """
+        from qitos.engine.engine import Engine
+
+        # Checkpoint store
+        checkpoint_store = None
+        if self.checkpoint_path:
+            from qitos.checkpoint.sqlite_store import SqliteCheckpointStore
+            checkpoint_store = SqliteCheckpointStore(self.checkpoint_path)
+
+        # Tracing provider
+        tracing_provider = None
+        if self.tracing_mode != "disabled":
+            from qitos.tracing import TracingProvider, TracingMode
+            from qitos.tracing.json_processor import JsonFileTraceProcessor
+            mode = TracingMode.ENABLED_WITHOUT_DATA if self.tracing_mode == "without_data" else TracingMode.ENABLED
+            tracing_provider = TracingProvider(
+                processors=[JsonFileTraceProcessor(output_dir=os.path.join(self.workspace_root, ".qitos", "traces"))],
+                mode=mode,
+            )
+
+        engine = Engine(
+            agent=self,
+            checkpoint_store=checkpoint_store,
+            tracing_provider=tracing_provider,
+            permission_pipeline=self.permission_pipeline,
+            read_before_write_enforcer=self._rbw_enforcer,
+            **kwargs,
+        )
+
+        # Mark dangerous tools with needs_approval in non-bypass modes
+        if self.permission_mode not in ("bypassPermissions",):
+            dangerous_tools = {"bash", "shell.bash", "Write", "Edit", "write_file_v2", "edit_file_v2"}
+            if hasattr(engine.tool_registry, 'list_tools'):
+                for name in engine.tool_registry.list_tools():
+                    if name in dangerous_tools:
+                        tool = engine.tool_registry.get(name) or engine.tool_registry.resolve(name)
+                        if tool is not None and hasattr(tool, 'spec'):
+                            tool.spec.needs_approval = True
+
+        return engine

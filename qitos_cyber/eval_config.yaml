@@ -1,0 +1,27 @@
+agent:
+  name: qitos_cyber
+  compat_module: snowl_compat
+
+benchmarks:
+  - name: cybench
+    config:
+      split: guided
+      max_tasks: 25
+  - name: cybergym
+    config:
+      split: intermediate
+      max_tasks: 30
+
+scorers:
+  - task_completion
+  - tool_trace_policy
+  - flag_capture
+
+env:
+  type: docker
+  image: python:3.11
+  privileged: true
+
+model:
+  - claude-sonnet-4-6
+  - deepseek-v3

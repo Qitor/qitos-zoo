@@ -3,9 +3,10 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional
+from typing import Annotated, Any, Dict, List, Optional
 
 from qitos.core.agent_module import AgentModule
+from qitos.core.channel import Append
 from qitos.core.decision import Decision
 from qitos.core.state import StateSchema
 
@@ -31,10 +32,10 @@ class VerificationState(StateSchema):
 
     target_path: str = ""
     findings_to_verify: List[Dict[str, Any]] = field(default_factory=list)
-    verified_findings: List[Dict[str, Any]] = field(default_factory=list)
+    verified_findings: Annotated[List[Dict[str, Any]], Append] = field(default_factory=list)
     poc_results: Dict[str, Any] = field(default_factory=dict)
     sandbox_available: bool = False
-    files_read: List[str] = field(default_factory=list)
+    files_read: Annotated[List[str], Append] = field(default_factory=list)
     handoff: Optional[Dict[str, Any]] = None
     tool_call_counts: Dict[str, int] = field(default_factory=dict)
     verified_count: int = 0

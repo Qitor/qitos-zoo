@@ -96,6 +96,9 @@ class MentorHook(EngineHook):
 
             self._last_analysis = analysis
 
+            # Emit to tracing provider if available (Y-8: MentorHook → Tracing)
+            self._emit_tracing_span(engine, analysis)
+
             # Inject into last action result
             self._inject_analysis(ctx, analysis)
 
@@ -128,6 +131,31 @@ class MentorHook(EngineHook):
 
         return "\n".join(actions)
 
+    def _emit_tracing_span(self, engine: Any, analysis: str) -> None:
+        """Emit a tracing span for the mentor analysis (Y-8: MentorHook → Tracing)."""
+        provider = getattr(engine, "_tracing_provider", None) or getattr(engine, "tracing_provider", None)
+        if provider is None:
+            return
+
+        try:
+            from qitos.tracing.models import SpanData, Span
+            trace = provider.create_trace(name="mentor_analysis")
+            with trace:
+                data = _MentorSpanData(
+                    step=self._step_count,
+                    analysis_preview=analysis[:500],
+                )
+                span = Span(
+                    trace_id=trace.trace_id,
+                    span_id=provider.gen_span_id(),
+                    data=data,
+                )
+                span.start()
+                span.finish()
+                trace._spans.append(span)
+        except Exception:
+            pass  # Tracing failure should not break the agent
+
     def _inject_analysis(self, ctx: HookContext, analysis: str) -> None:
         """Append mentor analysis to the last action result."""
         if not ctx.action_results:
@@ -142,6 +170,24 @@ class MentorHook(EngineHook):
                 f"\n</enhanced_response>"
             )
             last_result["output"] = str(output) + mentor_section
+
+
+class _MentorSpanData(SpanData):
+    """SpanData for mentor analysis events."""
+
+    def __init__(self, step: int, analysis_preview: str = ""):
+        self.step = step
+        self.analysis_preview = analysis_preview
+
+    @property
+    def type(self) -> str:  # noqa: A003
+        return "mentor"
+
+    def export(self) -> dict:
+        return {
+            "step": self.step,
+            "analysis_preview": self.analysis_preview,
+        }
 
 
 __all__ = ["MentorHook"]

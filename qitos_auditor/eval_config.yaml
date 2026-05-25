@@ -1,0 +1,25 @@
+agent:
+  name: qitos_auditor
+  compat_module: snowl_compat
+
+benchmarks:
+  - name: cybergym
+    config:
+      split: intermediate
+      max_tasks: 30
+  - name: owasp_benchmark
+    config:
+      category: web
+
+scorers:
+  - task_completion
+  - tool_trace_policy
+  - vulnerability_coverage
+
+env:
+  type: docker
+  image: python:3.11
+
+model:
+  - claude-sonnet-4-6
+  - deepseek-v3

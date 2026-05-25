@@ -3,9 +3,10 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional
+from typing import Annotated, Any, Dict, List, Optional
 
 from qitos.core.agent_module import AgentModule
+from qitos.core.channel import Append
 from qitos.core.decision import Decision
 from qitos.core.state import StateSchema
 
@@ -31,10 +32,10 @@ class AnalysisState(StateSchema):
 
     target_path: str = ""
     tech_stack: Dict[str, str] = field(default_factory=dict)
-    findings: List[Dict[str, Any]] = field(default_factory=list)
+    findings: Annotated[List[Dict[str, Any]], Append] = field(default_factory=list)
     scanner_results: Dict[str, Any] = field(default_factory=dict)
-    analyzed_files: List[str] = field(default_factory=list)
-    files_read: List[str] = field(default_factory=list)
+    analyzed_files: Annotated[List[str], Append] = field(default_factory=list)
+    files_read: Annotated[List[str], Append] = field(default_factory=list)
     handoff: Optional[Dict[str, Any]] = None
     tool_call_counts: Dict[str, int] = field(default_factory=dict)
 
