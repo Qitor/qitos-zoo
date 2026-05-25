@@ -1,0 +1,55 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "qitos-zoo"
+version = "0.1.0"
+description = "Official agent reproduction zoo for the QitOS agent framework"
+readme = "README.md"
+license = { text = "MIT" }
+requires-python = ">=3.10"
+dependencies = [
+    "qitos>=0.4.0",
+]
+authors = [
+    { name = "QitOS Team" },
+]
+keywords = [
+    "llm agents", "ai agents", "agent zoo", "coding agent", "security agent",
+]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Science/Research",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+]
+
+[project.optional-dependencies]
+coder = []
+cyber = []
+auditor = []
+all = []
+dev = [
+    "pytest>=7",
+]
+
+[project.urls]
+Source = "https://github.com/Qitor/qitos-zoo"
+Issues = "https://github.com/Qitor/qitos-zoo/issues"
+
+[tool.setuptools.packages.find]
+include = ["qitos_coder*", "qitos_cyber*", "qitos_auditor*", "experimental*"]
+exclude = ["docs*"]
+
+[tool.pytest.ini_options]
+testpaths = [
+    "qitos_coder/tests",
+    "qitos_cyber/tests",
+    "qitos_auditor/tests",
+]

@@ -334,10 +334,12 @@ class GitleaksScanTool(BaseTool):
         max_results = int(args.get("max_results", 50))
 
         no_git_flag = "--no-git" if no_git else ""
+        import tempfile
+        report_path = os.path.join(tempfile.gettempdir(), "gitleaks-report.json")
         cmd = (
             f"gitleaks detect --source {target} --report-format json "
-            f"--report-path /tmp/gitleaks-report.json --exit-code 0 "
-            f"{no_git_flag} && cat /tmp/gitleaks-report.json"
+            f"--report-path {report_path} --exit-code 0 "
+            f"{no_git_flag} && cat {report_path}"
         )
         result = _try_docker_or_local(cmd, project_root, timeout=180)
 
