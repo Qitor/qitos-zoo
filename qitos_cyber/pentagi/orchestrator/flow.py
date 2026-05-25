@@ -9,7 +9,7 @@ from typing import Any, Dict, List, Optional
 
 from qitos.core.agent_spec import AgentRegistry, AgentSpec
 from qitos.core.task import Task
-from qitos.engine._loop_detector import ToolCallLoopDetector
+from qitos.engine import ToolCallLoopDetector
 from qitos.engine.states import RuntimeBudget
 from qitos.engine.stop_criteria import FinalResultCriteria
 
@@ -97,7 +97,13 @@ class PentAGIFlow:
     4. ReporterAgent produces final report
     """
 
-    def __init__(self, config: PentAGIConfig, llm: Any = None):
+    def __init__(
+        self,
+        config: PentAGIConfig,
+        llm: Any = None,
+        checkpoint_path: str | None = None,
+        tracing_mode: str = "disabled",
+    ):
         self.config = config
         self.llm = llm
         self._subtask_manager = SubtaskManager(max_subtasks=config.max_subtasks)
@@ -113,6 +119,8 @@ class PentAGIFlow:
         self._run_id: str = ""
         self._current_execution_context = ""
         self._current_execution_context_short = ""
+        self.checkpoint_path = checkpoint_path
+        self.tracing_mode = tracing_mode
 
     def _build_system(self) -> None:
         """Build the complete agent system."""
@@ -271,6 +279,31 @@ class PentAGIFlow:
             return self.config.docker_image
         profile = get_docker_config(self.config.docker_profile)
         return profile["image"]
+
+    def _phase1_engine_kwargs(self) -> Dict[str, Any]:
+        """Build Engine kwargs for Phase 1 integrations (checkpoint, tracing)."""
+        kwargs: Dict[str, Any] = {}
+
+        # Checkpoint store
+        if self.checkpoint_path:
+            from qitos.checkpoint.sqlite_store import SqliteCheckpointStore
+            kwargs["checkpoint_store"] = SqliteCheckpointStore(self.checkpoint_path)
+
+        # Tracing provider
+        if self.tracing_mode != "disabled":
+            from qitos.tracing import TracingProvider, TracingMode
+            from qitos.tracing.json_processor import JsonFileTraceProcessor
+            import os
+            mode = TracingMode.ENABLED_WITHOUT_DATA if self.tracing_mode == "without_data" else TracingMode.ENABLED
+            trace_dir = os.path.join(
+                self.config.target_path or ".", ".qitos", "traces", "pentagi"
+            )
+            kwargs["tracing_provider"] = TracingProvider(
+                processors=[JsonFileTraceProcessor(output_dir=trace_dir)],
+                mode=mode,
+            )
+
+        return kwargs
 
     def _attach_compact_history(self, agent: Any) -> None:
         """Attach a CompactHistory with PentAGI summarizer prompt to an agent.
@@ -744,6 +777,7 @@ class PentAGIFlow:
             stop_criteria=[FinalResultCriteria()],
             loop_detector=ToolCallLoopDetector(strip_volatile=True),
             env=self._docker_env,
+            **self._phase1_engine_kwargs(),
         )
 
         try:
