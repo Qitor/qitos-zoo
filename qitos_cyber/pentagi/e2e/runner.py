@@ -67,7 +67,9 @@ def run_pentagi_e2e_task(
         # Tier 4: plant flag
         if tier >= 4:
             flag = f"PENTAGI_FLAG_{uuid4().hex[:12]}"
-            manager.plant_flag("/tmp/pentagi_flag.txt", flag, flag_name="exploit_flag")
+            import tempfile
+            flag_path = os.path.join(tempfile.gettempdir(), "pentagi_flag.txt")
+            manager.plant_flag(flag_path, flag, flag_name="exploit_flag")
 
         # Build PentAGIConfig
         tier_budgets = {

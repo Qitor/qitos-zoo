@@ -44,8 +44,7 @@ Source = "https://github.com/Qitor/qitos-zoo"
 Issues = "https://github.com/Qitor/qitos-zoo/issues"
 
 [tool.setuptools.packages.find]
-include = ["qitos_coder*", "qitos_cyber*", "qitos_auditor*", "experimental*"]
-exclude = ["docs*"]
+include = ["qitos_zoo*"]
 
 [tool.pytest.ini_options]
 testpaths = [
