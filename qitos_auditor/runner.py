@@ -33,6 +33,10 @@ class DeepAuditRunner:
         if self.llm is not None:
             return
 
+        # Skip LLM creation if credentials are not configured
+        if not self.config.api_key and not self.config.base_url:
+            return
+
         provider = self.config.model_provider
         if provider == "openai-compatible":
             try:
@@ -45,7 +49,7 @@ class DeepAuditRunner:
                     temperature=self.config.temperature,
                     max_tokens=self.config.max_tokens,
                 )
-            except ImportError:
+            except (ImportError, ValueError):
                 pass
 
     def run(

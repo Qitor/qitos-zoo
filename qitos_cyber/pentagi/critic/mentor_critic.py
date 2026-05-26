@@ -14,6 +14,7 @@ from __future__ import annotations
 from typing import Any, Optional
 
 from qitos.engine.hooks import EngineHook, HookContext
+from qitos.tracing.models import SpanData, Span
 from ..prompts.summarizer_prompt import SUMMARIZER_SYSTEM_PROMPT
 from ..prompts.mentor_prompt import MENTOR_QUESTION_PROMPT
 
@@ -138,7 +139,6 @@ class MentorHook(EngineHook):
             return
 
         try:
-            from qitos.tracing.models import SpanData, Span
             trace = provider.create_trace(name="mentor_analysis")
             with trace:
                 data = _MentorSpanData(
